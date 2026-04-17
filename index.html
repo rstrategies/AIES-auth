@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html><head><title>AIES Auth</title></head>
+<body>
+<p style="font-family:monospace;color:#555;padding:20px;">Authenticating… this window will close automatically.</p>
+<script>
+  if (window.opener) {
+    window.opener.postMessage({ type:"AIES_AUTH", url:window.location.href }, "*");
+  }
+  setTimeout(()=>window.close(), 1500);
+</script>
+</body></html>
