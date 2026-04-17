@@ -1,11 +1,64 @@
 <!DOCTYPE html>
-<html><head><title>AIES Auth</title></head>
+<html>
+<head>
+<title>AIES — Microsoft Login</title>
+<style>
+  body{font-family:monospace;background:#f5f0e8;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+  .box{text-align:center;padding:40px;max-width:480px}
+  h2{color:#2c2417;font-size:18px;margin:0 0 10px}
+  p{color:#888;font-size:12px;margin:0 0 20px;line-height:1.6}
+  .btn{padding:12px 28px;background:#2c2417;color:#fff;border:none;cursor:pointer;font-family:monospace;font-size:12px;letter-spacing:2px;margin-top:12px}
+  #urlbox{margin-top:20px;background:#ede7da;padding:12px;font-size:11px;word-break:break-all;color:#3A5A72;display:none}
+  #urllabel{color:#888;font-size:11px;margin-top:16px;display:none}
+</style>
+</head>
 <body>
-<p style="font-family:monospace;color:#555;padding:20px;">Authenticating… this window will close automatically.</p>
+<div class="box">
+  <h2 id="title">Authentication successful</h2>
+  <p id="msg">Communicating with AIES… this window should close automatically.</p>
+  <button class="btn" id="closeBtn" style="display:none" onclick="window.close()">CLOSE THIS WINDOW</button>
+  <div id="urllabel">If AIES still shows "Connecting…", copy this URL and paste it into AIES:</div>
+  <div id="urlbox"></div>
+</div>
 <script>
-  if (window.opener) {
-    window.opener.postMessage({ type:"AIES_AUTH", url:window.location.href }, "*");
+  var redirectUrl = window.location.href;
+  document.getElementById('urlbox').textContent = redirectUrl;
+
+  function tryNotify() {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'AIES_AUTH', url: redirectUrl }, '*');
+        return true;
+      }
+    } catch(e) {}
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'AIES_AUTH', url: redirectUrl }, '*');
+        return true;
+      }
+    } catch(e) {}
+    return false;
   }
-  setTimeout(()=>window.close(), 1500);
+
+  // Try immediately and retry several times
+  tryNotify();
+  var tries = 0;
+  var retry = setInterval(function() {
+    tryNotify();
+    if (tries++ > 8) clearInterval(retry);
+  }, 300);
+
+  // Attempt auto-close after 2 seconds
+  setTimeout(function() {
+    try { window.close(); } catch(e) {}
+    // If still open 500ms later, show fallback UI
+    setTimeout(function() {
+      document.getElementById('msg').textContent = 'Authentication complete. You may close this window, then return to AIES.';
+      document.getElementById('closeBtn').style.display = 'inline-block';
+      document.getElementById('urllabel').style.display = 'block';
+      document.getElementById('urlbox').style.display = 'block';
+    }, 500);
+  }, 2000);
 </script>
-</body></html>
+</body>
+</html>
